@@ -1,0 +1,39 @@
+[submodule "MyDimmer"]
+	path = MyDimmer
+	url = https://github.com/mczerski/MyDimmer.git
+	branch = mys_toolkit
+[submodule "MyMultiSensor"]
+	path = MyMultiSensor
+	url = https://github.com/mczerski/MyMultiSensor.git
+	branch = refactor
+[submodule "libraries/AnalogMultiButton"]
+	path = libraries/AnalogMultiButton
+	url = https://github.com/dxinteractive/AnalogMultiButton.git
+[submodule "libraries/APDS9930"]
+	path = libraries/APDS9930
+	url = https://github.com/mczerski/APDS9930.git
+[submodule "libraries/BH1750"]
+	path = libraries/BH1750
+	url = https://github.com/claws/BH1750.git
+[submodule "libraries/Bounce2"]
+	path = libraries/Bounce2
+	url = https://github.com/thomasfredericks/Bounce2
+[submodule "libraries/DallasTemperature"]
+	path = libraries/DallasTemperature
+	url = https://github.com/milesburton/Arduino-Temperature-Control-Library
+[submodule "libraries/MySensors"]
+	path = libraries/MySensors
+	url = https://github.com/mysensors/MySensors.git
+[submodule "libraries/MySensorsToolkit"]
+	path = libraries/MySensorsToolkit
+	url = https://github.com/mczerski/MySensorsToolkit.git
+	branch = refactor
+[submodule "libraries/SoftTimer"]
+	path = libraries/SoftTimer
+	url = https://github.com/yehnan/SoftTimer.git
+[submodule "libraries/BME280"]
+	path = libraries/BME280
+	url = https://www.github.com/finitespace/BME280
+[submodule "libraries/OneWire"]
+	path = libraries/OneWire
+	url = https://github.com/PaulStoffregen/OneWire.git
