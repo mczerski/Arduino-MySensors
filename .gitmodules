@@ -37,3 +37,9 @@
 [submodule "libraries/OneWire"]
 	path = libraries/OneWire
 	url = https://github.com/PaulStoffregen/OneWire.git
+[submodule "libraries/openmili"]
+	path = libraries/openmili
+	url = https://github.com/mczerski/openmili.git
+[submodule "libraries/RF24"]
+	path = libraries/RF24
+	url = https://github.com/nRF24/RF24.git
