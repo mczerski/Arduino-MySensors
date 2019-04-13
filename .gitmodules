@@ -23,7 +23,7 @@
 	url = https://github.com/milesburton/Arduino-Temperature-Control-Library
 [submodule "libraries/MySensors"]
 	path = libraries/MySensors
-	url = https://github.com/mysensors/MySensors.git
+	url = https://github.com/mczerski/MySensors.git
 [submodule "libraries/MySensorsToolkit"]
 	path = libraries/MySensorsToolkit
 	url = https://github.com/mczerski/MySensorsToolkit.git
