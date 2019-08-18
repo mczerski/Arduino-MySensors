@@ -73,8 +73,8 @@ MyMessage msg2(SECONDARY_CHILD_ID, V_TRIPPED);
 void setup()
 {
 	// Setup the buttons
-	pinMode(PRIMARY_BUTTON_PIN, INPUT_PULLUP);
-	pinMode(SECONDARY_BUTTON_PIN, INPUT_PULLUP);
+	//pinMode(PRIMARY_BUTTON_PIN, INPUT_PULLUP);
+	//pinMode(SECONDARY_BUTTON_PIN, INPUT_PULLUP);
 }
 
 void presentation()
@@ -99,23 +99,8 @@ void loop()
 	// Short delay to allow buttons to properly settle
 	sleep(5);
 
-	value = digitalRead(PRIMARY_BUTTON_PIN);
-
-	if (value != sentValue) {
-		// Value has changed from last transmission, send the updated value
-		send(msg.set(value==HIGH));
-		sentValue = value;
-	}
-
-	value = digitalRead(SECONDARY_BUTTON_PIN);
-
-	if (value != sentValue2) {
-		// Value has changed from last transmission, send the updated value
-		send(msg2.set(value==HIGH));
-		sentValue2 = value;
-	}
-
+  send(msg.set(value==HIGH));
 	// Sleep until something happens with the sensor
 	//sleep(PRIMARY_BUTTON_PIN-2, CHANGE, SECONDARY_BUTTON_PIN-2, CHANGE, 0);
- sleep(3000);
+  sleep(5000);
 }
