@@ -14,7 +14,7 @@
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
-* version 2 as published by the Free Software Foundation.
+* version 2 as published by the Free Software Foundation. 
 *
 *******************************
 *
@@ -40,15 +40,21 @@
 //#define MY_DEBUG
 
 // Enable and select radio type attached
-#define MY_RADIO_NRF24
+//#define MY_RADIO_NRF24
 //#define MY_RADIO_NRF5_ESB
-//#define MY_RADIO_RFM69
+#define MY_RADIO_RFM69
 //#define MY_RADIO_RFM95
-#define MY_RF24_CS_PIN 10
-#define MY_RF24_CE_PIN 9
+//#define MY_RF24_CS_PIN 10
+//#define MY_RF24_CE_PIN 9
 #define MY_RFM69_NEW_DRIVER
 #define MY_RFM69_ATC_MODE_DISABLED
-#define MY_RFM69_TX_POWER_DBM 0
+#define MY_RFM69_TX_POWER_DBM 10
+//#define MY_RFM69HW
+#define MY_RFM69_CS_PIN 10
+#define MY_RFM69_IRQ_PIN 3
+//#define MY_DEBUG_VERBOSE_RFM69
+//#define MY_DEBUG_VERBOSE_TRANSPORT
+//#define MY_SIGNAL_REPORT_ENABLED
 
 //#define MY_SIGNING_SOFT
 //#define MY_SIGNING_REQUEST_SIGNATURES
