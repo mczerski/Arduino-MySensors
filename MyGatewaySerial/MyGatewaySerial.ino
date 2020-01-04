@@ -37,7 +37,7 @@
 */
 
 // Enable debug prints to serial monitor
-//#define MY_DEBUG
+#define MY_DEBUG
 
 // Enable and select radio type attached
 //#define MY_RADIO_NRF24
@@ -52,9 +52,9 @@
 //#define MY_RFM69HW
 #define MY_RFM69_CS_PIN 10
 #define MY_RFM69_IRQ_PIN 3
-//#define MY_DEBUG_VERBOSE_RFM69
-//#define MY_DEBUG_VERBOSE_TRANSPORT
-//#define MY_SIGNAL_REPORT_ENABLED
+#define MY_DEBUG_VERBOSE_RFM69
+#define MY_DEBUG_VERBOSE_TRANSPORT
+#define MY_SIGNAL_REPORT_ENABLED
 
 //#define MY_SIGNING_SOFT
 //#define MY_SIGNING_REQUEST_SIGNATURES
