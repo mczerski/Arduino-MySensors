@@ -64,7 +64,7 @@ typedef long    LONG;
 /* ----------------------- RS485 specifics ----------------------------------*/
 #ifdef  RTS_ENABLE
 
-#define RTS_PIN         PC0
+#define RTS_PIN         PC1
 #define RTS_DDR         DDRC
 #define RTS_PORT        PORTC
 
@@ -74,12 +74,12 @@ typedef long    LONG;
         RTS_PORT &= ~( _BV( RTS_PIN ) ); \
     } while( 0 );
 
-#define RTS_HIGH        \
+#define RTS_LOW        \
     do { \
         RTS_PORT |= _BV( RTS_PIN ); \
     } while( 0 );
 
-#define RTS_LOW         \
+#define RTS_HIGH         \
     do { \
         RTS_PORT &= ~( _BV( RTS_PIN ) ); \
     } while( 0 );

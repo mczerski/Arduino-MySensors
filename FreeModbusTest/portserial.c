@@ -6,10 +6,6 @@
  *   - ATmega8, ATmega16, ATmega32 support
  *   - RS485 support for DS75176
  *
- * Modfications Copyright (C) 2006 Michał:
- *   - Prepared to compile with atmega328p
- *
- *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -24,7 +20,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * File: $Id: portserial.c,v 1.6 2006/09/17 16:45:53 wolti Exp $
+ * File: $Id$
  */
 
 #include <avr/io.h>
@@ -36,8 +32,9 @@
 #include "mb.h"
 #include "mbport.h"
 
-#define BAUD 38400
-#include <util/setbaud.h>
+#define UART_BAUD_RATE          9600
+#define UART_BAUD_CALC(UART_BAUD_RATE,FOSC) \
+    ((F_CPU + UART_BAUD_RATE * 8UL) / (UART_BAUD_RATE * 16UL) - 1UL)
 
 //#define UART_UCSRB  UCSR0B
 
@@ -79,10 +76,9 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
 
     /* prevent compiler warning. */
     (void)ucPORT;
-
-    // set computed value by util/setbaud.h
-    UBRR0H = UBRRH_VALUE;
-    UBRR0L = UBRRL_VALUE;
+	
+    UBRR0H = UART_BAUD_CALC( ulBaudRate, F_CPU ) >> 8;;
+    UBRR0L = UART_BAUD_CALC( ulBaudRate, F_CPU );
 
 #if USE_2X
     UCSR0A |= (1<<U2X0);
