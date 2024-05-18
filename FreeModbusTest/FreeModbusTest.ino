@@ -1,11 +1,12 @@
-#include "mb.h"
+#include "mb_with_wdt.h"
 
+uint16_t holding[100];
 
 void setup() {
    const UCHAR ucSlaveID[] = { 0xAA, 0xBB, 0xCC };
    eMBErrorCode eStatus;
 
-   eStatus = eMBInit(MB_RTU, 0x0A, 0, 500000, MB_PAR_NONE);
+   eStatus = eMBInitWithWDT(MB_RTU, 0x0A, 0, 500000, MB_PAR_NONE, WDTO_8S);
 
    eStatus = eMBSetSlaveID(0x34, TRUE, ucSlaveID, 3);
 
@@ -15,13 +16,14 @@ void setup() {
 
 void loop() {
   eMBPoll();
+  if (holding[99]) {
+    while (1);
+  }
 }
 
 eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs) {
   return MB_ENOREG;
 }
-
-uint16_t holding[100];
 
 eMBErrorCode eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode) {
         uint16_t i;
@@ -39,7 +41,6 @@ eMBErrorCode eMBRegHoldingCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNR
                         holding[i + usAddress] = (pucRegBuffer[i * 2 + 0] << 8) | pucRegBuffer[i * 2 + 1];
 
                 }
-
         }
 
         return MB_ENOERR;
