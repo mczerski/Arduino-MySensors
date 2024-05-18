@@ -28,7 +28,6 @@
 
 /* ----------------------- Platform includes --------------------------------*/
 
-#include <avr/io.h>
 #include <avr/interrupt.h>
 
 /* ----------------------- Defines ------------------------------------------*/
@@ -60,77 +59,14 @@ typedef long    LONG;
 #define FALSE           0
 #endif
 
-/* ----------------------- AVR platform specifics ---------------------------*/
-
-// #define SIG_USART_DATA  ISR( UART_RX_vect )
-// #define SIG_USART_RECV  ISR( UART_UDRE_vect )
-
-//#if defined (__AVR_ATmega168__)
-//#define UCSRB           UCSR0B
-//#define TXEN            TXEN0
-//#define RXEN            RXEN0
-//#define RXCIE           RXCIE0
-//#define TXCIE           TXCIE0
-//#define UDRE            UDRE0
-//#define UBRR            UBRR0
-//#define UCSRC           UCSR0C
-//#define UPM1            UPM01
-//#define UPM0            UPM00
-//#define UCSZ0           UCSZ00
-//#define UCSZ1           UCSZ01
-//#define UDR             UDR0
-//#define SIG_UART_TRANS  SIG_USART_TRANS
-//
-//#elif defined (__AVR_ATmega169__)
-//
-//#define SIG_UART_TRANS  SIG_USART_TRANS
-//
-//#elif defined (__AVR_ATmega8__)
-//#define UBRR            UBRRL
-//#define TCCR1C          TCCR1A  /* dummy */
-//#define TIMSK1          TIMSK
-//#define TIFR1           TIFR
-////#define SIG_USART_DATA  SIG_UART_DATA
-////#define SIG_USART_RECV  SIG_UART_RECV
-//#define SIG_USART_DATA  UART_RX_vect
-//#define SIG_USART_RECV  UART_UDRE_vect
-//
-//#elif defined (__AVR_ATmega16__)
-//#define UBRR            UBRRL
-//#define TCCR1C          TCCR1A  /* dummy */
-//#define TIMSK1          TIMSK
-//#define TIFR1           TIFR
-//
-//
-//#elif defined (__AVR_ATmega32__)
-//#define UBRR            UBRRL
-//#define TCCR1C          TCCR1A  /* dummy */
-//#define TIMSK1          TIMSK
-//#define TIFR1           TIFR
-//
-//#elif defined (__AVR_ATmega128__)
-//#define UCSRB           UCSR0B
-//#define UBRR            UBRR0L
-//#define UDR             UDR0
-//#define TIMSK1          TIMSK
-//#define TIFR1           TIFR
-//#define SIG_UART_TRANS  SIG_USART0_TRANS
-//#define SIG_USART_DATA  SIG_USART0_DATA
-//#define SIG_USART_RECV  SIG_USART0_RECV
-//#define UCSZ0           UCSZ00
-//#define UCSZ1           UCSZ01
-//#define UPM0            UPM00
-//#define UPM1            UPM01
-//#define UCSRC           UCSR0C
-//
-//#endif
+#define RTS_ENABLE
 
 /* ----------------------- RS485 specifics ----------------------------------*/
 #ifdef  RTS_ENABLE
 
-#define RTS_PIN         PB0
-#define RTS_DDR         DDRB
-#define RTS_PORT        PORTB
+#define RTS_PIN         PC0
+#define RTS_DDR         DDRC
+#define RTS_PORT        PORTC
 
 #define RTS_INIT        \
     do { \

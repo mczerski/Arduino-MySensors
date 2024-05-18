@@ -29,7 +29,6 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-//#include <avr/signal.h>
 
 #include "port.h"
 
@@ -148,7 +147,7 @@ ISR( USART_RX_vect )
 }
 
 #ifdef RTS_ENABLE
-SIGNAL( SIG_UART_TRANS )
+ISR( USART_TX_vect )
 {
     RTS_LOW;
 }
