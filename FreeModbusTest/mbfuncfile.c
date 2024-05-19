@@ -145,14 +145,16 @@ eMBFuncReadFileRecord( UCHAR * pucFrame, USHORT * usLen )
         if ( (usFileByteLen <= MB_PDU_FUNC_FILE_MAX_LEN) && (MB_PDU_FUNC_FILE_OVERHEAD == ucFrameLen) )
         {
             /* Make callback to read the records. */
-            eRegStatus = eMBRegFileCB( &pucFrame[MB_PDU_FUNC_FILE_DATA_OFF], usFileNum,
+            eRegStatus = eMBRegFileCB( &pucFrame[MB_PDU_DATA_OFF + 3], usFileNum,
                                        usFileRec, usFileRecLen, MB_REG_READ );
 
             if ( eRegStatus == MB_ENOERR )
             {
-                *usLen += ( usFileRecLen * 2 );
-                pucFrame[MB_PDU_FUNC_FILE_FRAME_LEN_OFF] = MB_PDU_FUNC_FILE_OVERHEAD + ( usFileRecLen * 2 );
-                
+                pucFrame[MB_PDU_DATA_OFF] = 2 + ( usFileRecLen * 2 );
+                pucFrame[MB_PDU_DATA_OFF + 1] = 1 + ( usFileRecLen * 2 );
+                pucFrame[MB_PDU_DATA_OFF + 2] = ucRefType;
+                *usLen = MB_PDU_DATA_OFF + 3 + ( usFileRecLen * 2 );
+
                 eStatus = MB_EX_NONE;
             }
             else
