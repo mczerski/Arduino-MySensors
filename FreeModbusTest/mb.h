@@ -445,7 +445,7 @@ eMBErrorCode    eMBRegDiscreteCB( UCHAR * pucRegBuffer, USHORT usAddress,
  */
 eMBErrorCode    eMBRegFileCB( UCHAR * pucFileBuffer, USHORT usFileNumber,
                               USHORT usRecordNumber, USHORT usRecordLength,
-                              eMBRegisterMode eMode );
+							  eMBRegisterMode eMode );
 
 #ifdef __cplusplus
 PR_END_EXTERN_C
