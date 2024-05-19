@@ -4,14 +4,23 @@
 #include "mb.h"
 #include <avr/wdt.h>
 
-#ifdef __cplusplus
-PR_BEGIN_EXTERN_C
-#endif
+typedef struct {
+  USHORT fileNumber;
+  USHORT fileSize;
+  uint8_t fileOffset;
+} MBFile;
 
-eMBErrorCode eMBInitWithWDT(eMBMode eMode, UCHAR ucSlaveAddress, UCHAR ucPort, ULONG ulBaudRate, eMBParity eParity, uint8_t wdt_value);
+extern MBFile fileTable[];
+
+eMBErrorCode eMBInitWithWDT(
+    eMBMode eMode,
+    UCHAR ucSlaveAddress,
+    UCHAR ucPort,
+    ULONG ulBaudRate,
+    eMBParity eParity,
+    UCHAR ucWdtValue,
+    UCHAR ucVersionMajor,
+    UCHAR ucVersionMinor);
 eMBErrorCode eMBPollWithWDT();
 
-#ifdef __cplusplus
-PR_END_EXTERN_C
-#endif
 #endif
