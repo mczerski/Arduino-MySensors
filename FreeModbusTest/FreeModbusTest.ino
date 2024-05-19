@@ -1,7 +1,7 @@
 #include "mb_with_wdt.h"
 
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 7
+#define VERSION_MINOR 8
 
 uint16_t holding[100] = {0};
 
