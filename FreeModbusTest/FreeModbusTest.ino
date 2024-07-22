@@ -9,11 +9,11 @@ uint16_t holding[10] = {0};
 void setup() {
   pinMode(MOTION_PIN, INPUT_PULLUP);
   eMBInitWithWDT(MB_RTU, 0, WDTO_8S, VERSION_MAJOR, VERSION_MINOR);
-  holding[0] = VERSION_MAJOR << 8 + VERSION_MINOR;
+  holding[1] = (VERSION_MAJOR << 8) + VERSION_MINOR;
 }
 
 void loop() {
-  holding[1] = digitalRead(MOTION_PIN);
+  holding[2] = digitalRead(MOTION_PIN);
   eMBPollWithWDT();
 }
 
