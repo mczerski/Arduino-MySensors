@@ -46,3 +46,6 @@
 [submodule "libraries/PMS_Library"]
 	path = libraries/PMS_Library
 	url = https://github.com/fu-hsi/PMS.git
+[submodule "libraries/FreeModbusAVR"]
+	path = libraries/FreeModbusAVR
+	url = ../Arduino-FreeModbusAVR.git
