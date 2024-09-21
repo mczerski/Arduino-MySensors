@@ -3,14 +3,16 @@
 #include <BounceSwitch.h>
 #include <SceneController.h>
 
-#define VERSION_MAJOR 2
-#define VERSION_MINOR 4
+#define VERSION_MAJOR "2"
+#define VERSION_MINOR "5"
 
 #define LIVINGROOM_LED
 
 using namespace mys_toolkit;
 
 #ifdef LIVINGROOM_LED
+#define SLAVE_ID 1
+#define SLAVE_NAME "Livingroom LED"
 #define DIMMER1
 #define SCENE2
 BounceSwitch sw1(3, Duration(50), true);
@@ -20,6 +22,8 @@ SceneController scene2;
 #endif
 
 #ifdef LIVINGROOM_SPOT
+#define SLAVE_ID 2
+#define SLAVE_NAME "Livingroom Spotlight"
 #define DIMMER1
 #define SCENE2
 BounceSwitch sw1(3, Duration(50), true);
@@ -29,14 +33,18 @@ SceneController scene2;
 #endif
 
 #ifdef KITCHEN_SPOT
+#define SLAVE_ID 3
+#define SLAVE_NAME "Kitchen Spotlight"
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
 SimpleDimmer dimmer1(5, true, 10, {.slowDimming=1, .fullBrightness=1});
 SceneController scene2;
 #endif
 
+const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
+
 void setup() {
-  eMBInitWithWDT(MB_RTU, 0, WDTO_8S, VERSION_MAJOR, VERSION_MINOR);
+  eMBInitWithWDT(MB_RTU, 0, WDTO_8S, SLAVE_ID, additional_info, sizeof(additional_info) - 1);
   #ifdef DIMMER1
   dimmer1.begin();
   #endif
