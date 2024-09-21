@@ -4,9 +4,9 @@
 #include <SceneController.h>
 
 #define VERSION_MAJOR "2"
-#define VERSION_MINOR "5"
+#define VERSION_MINOR "6"
 
-#define LIVINGROOM_LED
+#define KITCHEN_MOTION
 
 using namespace mys_toolkit;
 
@@ -35,10 +35,19 @@ SceneController scene2;
 #ifdef KITCHEN_SPOT
 #define SLAVE_ID 3
 #define SLAVE_NAME "Kitchen Spotlight"
+#define DIMMER1
+#define SCENE2
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
 SimpleDimmer dimmer1(5, true, 10, {.slowDimming=1, .fullBrightness=1});
 SceneController scene2;
+#endif
+
+#ifdef KITCHEN_MOTION
+#define SLAVE_ID 4
+#define SLAVE_NAME "Kitchen Motion"
+#define MOTION
+#define MOTION_PIN 3
 #endif
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
@@ -50,6 +59,9 @@ void setup() {
   #endif
   #ifdef DIMMER2
   dimmer2.begin();
+  #endif
+  #ifdef MOTION
+  pinMode(MOTION_PIN, INPUT_PULLUP);
   #endif
 }
 
@@ -76,7 +88,7 @@ void loop() {
 }
 
 eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs) {
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 10) {
+  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 11) {
     for (USHORT i = 0; i < usNRegs; i++) {
       switch (usAddress + i) {
 #ifdef DIMMER1
@@ -131,7 +143,15 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
            pucRegBuffer[i * 2 + 1] = scene4.getScene1Counter();
            break;
 #endif
+#ifdef MOTION
+        case 11:
+           pucRegBuffer[i * 2 + 0] = 0;
+           pucRegBuffer[i * 2 + 1] = digitalRead(MOTION_PIN);
+           break;
+#endif
         default:
+           pucRegBuffer[i * 2 + 0] = 0;
+           pucRegBuffer[i * 2 + 1] = 0;
            break;
       }
     }
@@ -141,7 +161,7 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
 }
 
 eMBErrorCode eMBRegHoldingCB2(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode) {
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 1) {
+  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 2) {
     for (USHORT i = 0; i < usNRegs; i++) {
       if (eMode == MB_REG_WRITE) {
         switch (usAddress + i) {
