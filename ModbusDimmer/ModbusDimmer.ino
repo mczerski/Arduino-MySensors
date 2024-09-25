@@ -6,7 +6,7 @@
 #define VERSION_MAJOR "2"
 #define VERSION_MINOR "6"
 
-#define KITCHEN_MOTION
+#define LIVINGROOM_SPOT
 
 using namespace mys_toolkit;
 
@@ -28,7 +28,7 @@ SceneController scene2;
 #define SCENE2
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
-SimpleDimmer dimmer1(5, true, 10, {.slowDimming=1, .fullBrightness=1});
+CwWwDimmer dimmer1(5, 6, true, 10, {.slowDimming=1, .fullBrightness=1});
 SceneController scene2;
 #endif
 
