@@ -4,17 +4,30 @@
 #include <SceneController.h>
 
 #define VERSION_MAJOR "2"
-#define VERSION_MINOR "6"
+#define VERSION_MINOR "8"
 
-#define LIVINGROOM_SPOT
+#define TEST
 
 using namespace mys_toolkit;
+
+#ifdef TEST
+#define SLAVE_ID 0
+#define SLAVE_NAME "Test"
+#define DIMMER1
+#define SCENE2
+#define FLASH_ID 0xC840
+BounceSwitch sw1(3, Duration(50), true);
+BounceSwitch sw2(4, Duration(50), true);
+CwWwDimmer dimmer1(5, 6, true, 10, {.slowDimming=1, .fullBrightness=1});
+SceneController scene2;
+#endif
 
 #ifdef LIVINGROOM_LED
 #define SLAVE_ID 1
 #define SLAVE_NAME "Livingroom LED"
 #define DIMMER1
 #define SCENE2
+#define FLASH_ID 0x1F65
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
 CwWwDimmer dimmer1(5, 6, true, 10, {.slowDimming=1, .fullBrightness=1});
@@ -26,6 +39,7 @@ SceneController scene2;
 #define SLAVE_NAME "Livingroom Spotlight"
 #define DIMMER1
 #define SCENE2
+#define FLASH_ID 0x1F65
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
 CwWwDimmer dimmer1(5, 6, true, 10, {.slowDimming=1, .fullBrightness=1});
@@ -37,6 +51,7 @@ SceneController scene2;
 #define SLAVE_NAME "Kitchen Spotlight"
 #define DIMMER1
 #define SCENE2
+#define FLASH_ID 0x1F65
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
 SimpleDimmer dimmer1(5, true, 10, {.slowDimming=1, .fullBrightness=1});
@@ -48,12 +63,14 @@ SceneController scene2;
 #define SLAVE_NAME "Kitchen Motion"
 #define MOTION
 #define MOTION_PIN 3
+#define FLASH_ID 0x1F65
 #endif
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
+SPIFlash flash(8, FLASH_ID);
 
 void setup() {
-  eMBInitWithWDT(MB_RTU, 0, WDTO_8S, SLAVE_ID, additional_info, sizeof(additional_info) - 1);
+  eMBInitWithWDT(MB_RTU, 0, WDTO_8S, SLAVE_ID, additional_info, sizeof(additional_info) - 1, &flash);
   #ifdef DIMMER1
   dimmer1.begin();
   #endif
