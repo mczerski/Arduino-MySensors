@@ -4,9 +4,9 @@
 #include <SceneController.h>
 
 #define VERSION_MAJOR "2"
-#define VERSION_MINOR "8"
+#define VERSION_MINOR "9"
 
-#define TEST
+#define KITCHEN_SPOT
 
 using namespace mys_toolkit;
 
@@ -16,9 +16,10 @@ using namespace mys_toolkit;
 #define DIMMER1
 #define SCENE2
 #define FLASH_ID 0xC840
+#define LED_PIN -1
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
-CwWwDimmer dimmer1(5, 6, true, 10, {.slowDimming=1, .fullBrightness=1});
+SimpleDimmer dimmer1(A1, true, 10, {.slowDimming=1, .fullBrightness=1});
 SceneController scene2;
 #endif
 
@@ -28,6 +29,8 @@ SceneController scene2;
 #define DIMMER1
 #define SCENE2
 #define FLASH_ID 0x1F65
+#define LED_PIN A1
+#define PRESCALER DurationPrescaler::CLK_64
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
 CwWwDimmer dimmer1(5, 6, true, 10, {.slowDimming=1, .fullBrightness=1});
@@ -40,6 +43,8 @@ SceneController scene2;
 #define DIMMER1
 #define SCENE2
 #define FLASH_ID 0x1F65
+#define LED_PIN A1
+#define PRESCALER DurationPrescaler::CLK
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
 CwWwDimmer dimmer1(5, 6, true, 10, {.slowDimming=1, .fullBrightness=1});
@@ -52,6 +57,8 @@ SceneController scene2;
 #define DIMMER1
 #define SCENE2
 #define FLASH_ID 0x1F65
+#define LED_PIN A1
+#define PRESCALER DurationPrescaler::CLK
 BounceSwitch sw1(3, Duration(50), true);
 BounceSwitch sw2(4, Duration(50), true);
 SimpleDimmer dimmer1(5, true, 10, {.slowDimming=1, .fullBrightness=1});
@@ -64,13 +71,14 @@ SceneController scene2;
 #define MOTION
 #define MOTION_PIN 3
 #define FLASH_ID 0x1F65
+#define LED_PIN A1
 #endif
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
 
 void setup() {
-  eMBInitWithWDT(MB_RTU, 0, WDTO_8S, SLAVE_ID, additional_info, sizeof(additional_info) - 1, &flash);
+  eMBInitWithWDT(MB_RTU, 0, WDTO_8S, SLAVE_ID, additional_info, sizeof(additional_info) - 1, &flash, LED_PIN);
   #ifdef DIMMER1
   dimmer1.begin();
   #endif
@@ -80,6 +88,7 @@ void setup() {
   #ifdef MOTION
   pinMode(MOTION_PIN, INPUT_PULLUP);
   #endif
+  Duration::setPrescaler(PRESCALER);
 }
 
 void loop() {
