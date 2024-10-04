@@ -1,12 +1,13 @@
-#include "mb_with_wdt.h"
+#include <mb_with_wdt.h>
 #include <Dimmer.h>
 #include <BounceSwitch.h>
 #include <SceneController.h>
+#include <APDS9930Switch.h>
 
 #define VERSION_MAJOR "2"
-#define VERSION_MINOR "9"
+#define VERSION_MINOR "10"
 
-#define KITCHEN_SPOT
+#define KITCHEN_LED
 
 using namespace mys_toolkit;
 
@@ -74,6 +75,23 @@ SceneController scene2;
 #define LED_PIN A1
 #endif
 
+#ifdef KITCHEN_LED
+#define SLAVE_ID 5
+#define SLAVE_NAME "Kitchen LED"
+#define DIMMER1
+#define SCENE2
+#define FLASH_ID 0xC840
+#define LED_PIN A1
+#define PRESCALER DurationPrescaler::CLK_64
+#define APDS9930
+MyAPDS9930 apds9930(2, 1);
+APDS9930Switch sw1(apds9930, 0);
+BounceSwitch sw2(3, Duration(50), true);
+BounceSwitch sw3(4, Duration(50), true);
+SimpleDimmer dimmer1(5, true, 10, {.slowDimming=1, .fullBrightness=1});
+SceneController scene2;
+#endif
+
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
 
@@ -87,6 +105,9 @@ void setup() {
   #endif
   #ifdef MOTION
   pinMode(MOTION_PIN, INPUT_PULLUP);
+  #endif
+  #ifdef APDS9930
+  apds9930.init();
   #endif
   Duration::setPrescaler(PRESCALER);
 }
@@ -110,11 +131,14 @@ void loop() {
   #ifdef SCENE4
   scene4.update(sw4.update());
   #endif
+  #ifdef APDS9930
+  apds9930.update();
+  #endif
   eMBPollWithWDT();
 }
 
 eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs) {
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 11) {
+  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 12) {
     for (USHORT i = 0; i < usNRegs; i++) {
       switch (usAddress + i) {
 #ifdef DIMMER1
@@ -173,6 +197,12 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
         case 11:
            pucRegBuffer[i * 2 + 0] = 0;
            pucRegBuffer[i * 2 + 1] = digitalRead(MOTION_PIN);
+           break;
+#endif
+#ifdef APDS9930
+        case 12:
+           pucRegBuffer[i * 2 + 0] = apds9930.getInt(0);
+           pucRegBuffer[i * 2 + 1] = apds9930.getErrorCode(0);
            break;
 #endif
         default:
