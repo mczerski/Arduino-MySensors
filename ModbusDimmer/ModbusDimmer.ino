@@ -2,7 +2,6 @@
 #include <Dimmer.h>
 #include <BounceSwitch.h>
 #include <SceneController.h>
-#include <APDS9930Switch.h>
 
 #define VERSION_MAJOR "2"
 #define VERSION_MINOR "10"
@@ -76,20 +75,29 @@ SceneController scene2;
 #endif
 
 #ifdef KITCHEN_LED
+#include <APDS9930Switch.h>
+#include <MiLightDimmer.h>
 #define SLAVE_ID 5
 #define SLAVE_NAME "Kitchen LED"
 #define DIMMER1
-#define SCENE2
+#define DIMMER2
+#define SCENE3
 #define FLASH_ID 0xC840
 #define LED_PIN A1
 #define PRESCALER DurationPrescaler::CLK_64
 #define APDS9930
+#define MI_LIGHT
+#define NRF24_CE_PIN 7
+#define NRF24_CSN_PIN 6
 MyAPDS9930 apds9930(2, 1);
+RF24 nrf24Radio(NRF24_CE_PIN, NRF24_CSN_PIN);
+PL1167_nRF24 pl1167(nrf24Radio);
 APDS9930Switch sw1(apds9930, 0);
 BounceSwitch sw2(3, Duration(50), true);
 BounceSwitch sw3(4, Duration(50), true);
 SimpleDimmer dimmer1(5, true, 10, {.slowDimming=1, .fullBrightness=1});
-SceneController scene2;
+MiLightDimmer dimmer2(pl1167, 0xF2EA, 4, false, 10, {.slowDimming=1, .fullBrightness=1});
+SceneController scene3;
 #endif
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
@@ -203,6 +211,12 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
         case 12:
            pucRegBuffer[i * 2 + 0] = apds9930.getInt(0);
            pucRegBuffer[i * 2 + 1] = apds9930.getErrorCode(0);
+           break;
+#endif
+#ifdef MI_LIGHT
+        case 13:
+           pucRegBuffer[i * 2 + 0] = 0;
+           pucRegBuffer[i * 2 + 1] = dimmer2.getErrorCode();
            break;
 #endif
         default:
