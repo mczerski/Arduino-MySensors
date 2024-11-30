@@ -2,7 +2,6 @@
 #include <BounceSwitch.h>
 #include <Relay.h>
 #include <BL0942.h>
-#include <SoftwareSerial.h>
 
 #define VERSION_MAJOR "1"
 #define VERSION_MINOR "1"
@@ -24,24 +23,23 @@ GPIORelay relay1(5);
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
-SoftwareSerial ser(12, 11);
-BL0942 bl0942(ser);
+BL0942 bl0942(Serial1);
+
+void cf_interrupt() {
+  relay1.set(false);
+}
 
 void setup() {
   eMBInitWithWDT(MB_RTU, 0, WDTO_8S, SLAVE_ID, additional_info, sizeof(additional_info) - 1, &flash, LED_PIN);
-  ser.begin(4800);
+  Serial1.begin(4800);
   bl0942.begin();
   pinMode(STATUS_LED_PIN, OUTPUT);
-  pinMode(CF_PIN, INPUT);
+  pinMode(CF_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(CF_PIN), cf_interrupt, RISING);
 }
 
 void loop() {
-  if (digitalRead(CF_PIN)) {
-    relay1.set(false);
-  }
-  else {
-    relay1.update(sw1.update());
-  }
+  relay1.update(sw1.update());
   digitalWrite(STATUS_LED_PIN, relay1.getState());
   bl0942.update();
   eMBPollWithWDT();
