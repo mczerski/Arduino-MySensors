@@ -18,7 +18,7 @@ using namespace mys_toolkit;
 #define STATUS_LED_PIN 6
 #define CF_PIN 2
 BounceSwitch sw1(3, Duration(50), false);
-GPIORelay relay1(5);
+GPIORelay relay1(5, Duration(250));
 #endif
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
@@ -36,6 +36,11 @@ void setup() {
   pinMode(STATUS_LED_PIN, OUTPUT);
   pinMode(CF_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CF_PIN), cf_interrupt, RISING);
+  // make sure relay is off
+  delay(500);
+  relay1.set(true);
+  delay(500);
+  relay1.set(false);
 }
 
 void loop() {
