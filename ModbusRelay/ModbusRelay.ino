@@ -2,6 +2,7 @@
 #include <BounceSwitch.h>
 #include <Relay.h>
 #include <BL0942.h>
+#include <TempSensor.h>
 
 #define VERSION_MAJOR "1"
 #define VERSION_MINOR "1"
@@ -24,6 +25,7 @@ GPIORelay relay1(5, Duration(250));
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
 BL0942 bl0942(Serial1);
+TempSensor tempSensor(245, 1.0);
 
 void cf_interrupt() {
   relay1.set(false);
@@ -36,6 +38,7 @@ void setup() {
   pinMode(STATUS_LED_PIN, OUTPUT);
   pinMode(CF_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CF_PIN), cf_interrupt, RISING);
+  tempSensor.begin();
   // make sure relay is off
   delay(500);
   relay1.set(true);
@@ -44,6 +47,7 @@ void setup() {
 }
 
 void loop() {
+  tempSensor.update();
   relay1.update(sw1.update());
   digitalWrite(STATUS_LED_PIN, relay1.getState());
   bl0942.update();
@@ -51,9 +55,8 @@ void loop() {
 }
 
 eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs) {
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 12) {
+  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 13) {
     for (USHORT i = 0; i < usNRegs; i++) {
-      int16_t v = 0;
       switch (usAddress + i) {
         case 1:
            pucRegBuffer[i * 2 + 0] = 0;
@@ -102,6 +105,10 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
         case 12:
            pucRegBuffer[i * 2 + 0] = digitalRead(CF_PIN);
            pucRegBuffer[i * 2 + 1] = bl0942.getCfOutput();
+           break;
+        case 13:
+           pucRegBuffer[i * 2 + 0] = (tempSensor.getTemp() >> 8) & 0xff;
+           pucRegBuffer[i * 2 + 1] = (tempSensor.getTemp() >> 0) & 0xff;
            break;
         default:
            pucRegBuffer[i * 2 + 0] = 0;
