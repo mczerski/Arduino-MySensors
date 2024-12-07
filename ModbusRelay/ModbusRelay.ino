@@ -24,7 +24,7 @@ GPIORelay relay1(5, Duration(250));
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
-BL0942 bl0942(Serial1);
+BL0942 bl0942(Serial1, 1.187);
 TempSensor tempSensor(245, 1.0);
 
 void cf_interrupt() {
@@ -49,7 +49,7 @@ void setup() {
 void loop() {
   tempSensor.update();
   relay1.update(sw1.update());
-  digitalWrite(STATUS_LED_PIN, relay1.getState());
+  analogWrite(STATUS_LED_PIN, relay1.getState() ? 10 : 0);
   bl0942.update();
   eMBPollWithWDT();
 }
