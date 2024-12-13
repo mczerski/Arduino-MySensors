@@ -3,9 +3,10 @@
 #include <Relay.h>
 #include <BL0942.h>
 #include <TempSensor.h>
+#include <EEPROM.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "1"
+#define VERSION_MINOR "2"
 
 #define TEST
 
@@ -24,8 +25,19 @@ GPIORelay relay1(5, Duration(250));
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
-BL0942 bl0942(Serial1, 1.187);
-TempSensor tempSensor(245, 1.0);
+BL0942 bl0942(Serial1);
+TempSensor tempSensor;
+union ConfData {
+  struct S {
+    float i_gain;
+    float v_gain;
+    float temp_gain;
+    int16_t temp_offset;
+  } s;
+  uint16_t data[sizeof(S) / sizeof(uint16_t)];
+} __attribute__((packed)) __attribute__((scalar_storage_order("little-endian")));
+static constexpr size_t CONF_REGS = sizeof(ConfData) / sizeof(uint16_t);
+ConfData conf;
 
 void cf_interrupt() {
   relay1.set(false);
@@ -39,6 +51,11 @@ void setup() {
   pinMode(CF_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CF_PIN), cf_interrupt, RISING);
   tempSensor.begin();
+
+  EEPROM.get(2, conf);
+  bl0942.calibrate(conf.s.i_gain, conf.s.v_gain);
+  tempSensor.calibrate(conf.s.temp_offset, conf.s.temp_gain);
+
   // make sure relay is off
   delay(500);
   relay1.set(true);
@@ -55,7 +72,7 @@ void loop() {
 }
 
 eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs) {
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 13) {
+  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 14 + CONF_REGS - 1) {
     for (USHORT i = 0; i < usNRegs; i++) {
       switch (usAddress + i) {
         case 1:
@@ -110,6 +127,10 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
            pucRegBuffer[i * 2 + 0] = (tempSensor.getTemp() >> 8) & 0xff;
            pucRegBuffer[i * 2 + 1] = (tempSensor.getTemp() >> 0) & 0xff;
            break;
+        case 14 ... 14 + CONF_REGS - 1:
+           pucRegBuffer[i * 2 + 0] = (conf.data[usAddress + i - 14] >> 8) & 0xff;
+           pucRegBuffer[i * 2 + 1] = (conf.data[usAddress + i - 14] >> 0) & 0xff;
+           break;
         default:
            pucRegBuffer[i * 2 + 0] = 0;
            pucRegBuffer[i * 2 + 1] = 0;
@@ -122,7 +143,8 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
 }
 
 eMBErrorCode eMBRegHoldingCB2(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode) {
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 1) {
+  bool update_conf = false;
+  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 2 + CONF_REGS - 1) {
     for (USHORT i = 0; i < usNRegs; i++) {
       if (eMode == MB_REG_WRITE) {
         switch (usAddress + i) {
@@ -134,12 +156,21 @@ eMBErrorCode eMBRegHoldingCB2(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usN
               relay1.set(false);
             }
             break;
+          case 2 ... 2 + CONF_REGS - 1:
+            conf.data[usAddress + i - 2] = (pucRegBuffer[i * 2 + 0] << 8) + pucRegBuffer[i * 2 + 1];
+            update_conf = true;
+            break;
           default:
             break;
         }
-        return MB_ENOERR;
       }
     }
+    if (update_conf) {
+      EEPROM.put(2, conf);
+      bl0942.calibrate(conf.s.i_gain, conf.s.v_gain);
+      tempSensor.calibrate(conf.s.temp_offset, conf.s.temp_gain);
+    }
+    return MB_ENOERR;
   }
   return MB_ENOREG;
 }
