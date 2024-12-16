@@ -23,19 +23,33 @@ BounceSwitch sw1(3, Duration(50), false);
 GPIORelay relay1(5, Duration(250));
 #endif
 
+template <typename S>
+union ModbusDataBlock {
+  S s;
+  uint16_t data[sizeof(S) / sizeof(uint16_t)];
+} __attribute__((packed)) __attribute__((scalar_storage_order("little-endian")));;
+
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
 BL0942 bl0942(Serial1);
 TempSensor tempSensor;
-union ConfData {
-  struct S {
-    float i_gain;
-    float v_gain;
-    float temp_gain;
-    int16_t temp_offset;
-  } s;
-  uint16_t data[sizeof(S) / sizeof(uint16_t)];
-} __attribute__((packed)) __attribute__((scalar_storage_order("little-endian")));
+
+struct ConfData_ {
+  float i_gain;
+  float v_gain;
+  float temp_gain;
+  int16_t temp_offset;
+};
+typedef ModbusDataBlock<ConfData_> ConfData;
+//union ConfData {
+//  struct S {
+//    float i_gain;
+//    float v_gain;
+//    float temp_gain;
+//    int16_t temp_offset;
+//  } s;
+//  uint16_t data[sizeof(S) / sizeof(uint16_t)];
+//} __attribute__((packed)) __attribute__((scalar_storage_order("little-endian")));
 static constexpr size_t CONF_REGS = sizeof(ConfData) / sizeof(uint16_t);
 ConfData conf;
 
@@ -72,7 +86,35 @@ void loop() {
 }
 
 eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs) {
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 14 + CONF_REGS - 1) {
+  struct InputRegisters_ {
+    uint16_t relay_state;
+    int32_t i_rms_mA;
+    int32_t v_rms_mV;
+    int32_t p_rms_mW;
+    int32_t e_mWh;
+    int32_t fast_i_rms_mA;
+    int16_t temperature;
+    ConfData_ conf_data;
+  };
+  typedef ModbusDataBlock<InputRegisters_> InputRegisters;
+  if (usAddress >= 1 and usAddress + usNRegs - 1 <= sizeof(InputRegisters) / sizeof(uint16_t) - 1) {
+    InputRegisters input_register = {
+      relay1.getState(),
+      bl0942.getIRms_mA(),
+      bl0942.getVRms_mV(),
+      bl0942.getPRms_mW(),
+      bl0942.getE_mWh(),
+      bl0942.getIFastRmsTh_mA(),
+      tempSensor.getTemp(),
+      conf.s,
+    };
+    uint16_t * buf = reinterpret_cast<uint16_t*>(pucRegBuffer);
+    for (size_t i=0; i<usNRegs; i++) {
+      buf[i] = input_register.data[i + usAddress - 1];
+    }
+  }
+  return MB_ENOREG;
+  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 13 + CONF_REGS - 1) {
     for (USHORT i = 0; i < usNRegs; i++) {
       switch (usAddress + i) {
         case 1:
@@ -120,14 +162,10 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
            pucRegBuffer[i * 2 + 1] = (bl0942.getIFastRmsTh_mA() >> 16) & 0xff;
            break;
         case 12:
-           pucRegBuffer[i * 2 + 0] = digitalRead(CF_PIN);
-           pucRegBuffer[i * 2 + 1] = bl0942.getCfOutput();
-           break;
-        case 13:
            pucRegBuffer[i * 2 + 0] = (tempSensor.getTemp() >> 8) & 0xff;
            pucRegBuffer[i * 2 + 1] = (tempSensor.getTemp() >> 0) & 0xff;
            break;
-        case 14 ... 14 + CONF_REGS - 1:
+        case 13 ... 13 + CONF_REGS - 1:
            pucRegBuffer[i * 2 + 0] = (conf.data[usAddress + i - 14] >> 8) & 0xff;
            pucRegBuffer[i * 2 + 1] = (conf.data[usAddress + i - 14] >> 0) & 0xff;
            break;
