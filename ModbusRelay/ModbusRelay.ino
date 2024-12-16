@@ -23,12 +23,6 @@ BounceSwitch sw1(3, Duration(50), false);
 GPIORelay relay1(5, Duration(250));
 #endif
 
-template <typename S>
-union ModbusDataBlock {
-  S s;
-  uint16_t data[sizeof(S) / sizeof(uint16_t)];
-} __attribute__((packed)) __attribute__((scalar_storage_order("little-endian")));;
-
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
 BL0942 bl0942(Serial1);
@@ -41,16 +35,6 @@ struct ConfData_ {
   int16_t temp_offset;
 };
 typedef ModbusDataBlock<ConfData_> ConfData;
-//union ConfData {
-//  struct S {
-//    float i_gain;
-//    float v_gain;
-//    float temp_gain;
-//    int16_t temp_offset;
-//  } s;
-//  uint16_t data[sizeof(S) / sizeof(uint16_t)];
-//} __attribute__((packed)) __attribute__((scalar_storage_order("little-endian")));
-static constexpr size_t CONF_REGS = sizeof(ConfData) / sizeof(uint16_t);
 ConfData conf;
 
 void cf_interrupt() {
@@ -97,92 +81,22 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
     ConfData_ conf_data;
   };
   typedef ModbusDataBlock<InputRegisters_> InputRegisters;
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= sizeof(InputRegisters) / sizeof(uint16_t) - 1) {
-    InputRegisters input_register = {
-      relay1.getState(),
-      bl0942.getIRms_mA(),
-      bl0942.getVRms_mV(),
-      bl0942.getPRms_mW(),
-      bl0942.getE_mWh(),
-      bl0942.getIFastRmsTh_mA(),
-      tempSensor.getTemp(),
-      conf.s,
-    };
-    uint16_t * buf = reinterpret_cast<uint16_t*>(pucRegBuffer);
-    for (size_t i=0; i<usNRegs; i++) {
-      buf[i] = input_register.data[i + usAddress - 1];
-    }
-  }
-  return MB_ENOREG;
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 13 + CONF_REGS - 1) {
-    for (USHORT i = 0; i < usNRegs; i++) {
-      switch (usAddress + i) {
-        case 1:
-           pucRegBuffer[i * 2 + 0] = 0;
-           pucRegBuffer[i * 2 + 1] = relay1.getState();
-           break;
-        case 2:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getIRms_mA() >> 8) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getIRms_mA() >> 0) & 0xff;
-           break;
-        case 3:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getIRms_mA() >> 24) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getIRms_mA() >> 16) & 0xff;
-           break;
-        case 4:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getVRms_mV() >> 8) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getVRms_mV() >> 0) & 0xff;
-           break;
-        case 5:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getVRms_mV() >> 24) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getVRms_mV() >> 16) & 0xff;
-           break;
-        case 6:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getPRms_mW() >> 8) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getPRms_mW() >> 0) & 0xff;
-           break;
-        case 7:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getPRms_mW() >> 24) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getPRms_mW() >> 16) & 0xff;
-           break;
-        case 8:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getE_mWh() >> 8) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getE_mWh() >> 0) & 0xff;
-           break;
-        case 9:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getE_mWh() >> 24) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getE_mWh() >> 16) & 0xff;
-           break;
-        case 10:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getIFastRmsTh_mA() >> 8) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getIFastRmsTh_mA() >> 0) & 0xff;
-           break;
-        case 11:
-           pucRegBuffer[i * 2 + 0] = (bl0942.getIFastRmsTh_mA() >> 24) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (bl0942.getIFastRmsTh_mA() >> 16) & 0xff;
-           break;
-        case 12:
-           pucRegBuffer[i * 2 + 0] = (tempSensor.getTemp() >> 8) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (tempSensor.getTemp() >> 0) & 0xff;
-           break;
-        case 13 ... 13 + CONF_REGS - 1:
-           pucRegBuffer[i * 2 + 0] = (conf.data[usAddress + i - 14] >> 8) & 0xff;
-           pucRegBuffer[i * 2 + 1] = (conf.data[usAddress + i - 14] >> 0) & 0xff;
-           break;
-        default:
-           pucRegBuffer[i * 2 + 0] = 0;
-           pucRegBuffer[i * 2 + 1] = 0;
-           break;
-      }
-    }
-    return MB_ENOERR;
-  }
-  return MB_ENOREG;
+  InputRegisters input_register = {
+    relay1.getState(),
+    bl0942.getIRms_mA(),
+    bl0942.getVRms_mV(),
+    bl0942.getPRms_mW(),
+    bl0942.getE_mWh(),
+    bl0942.getIFastRmsTh_mA(),
+    tempSensor.getTemp(),
+    conf.s,
+  };
+  return eMBCopyToRegBuffer(input_register, pucRegBuffer, usAddress, usNRegs);
 }
 
 eMBErrorCode eMBRegHoldingCB2(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode) {
   bool update_conf = false;
-  if (usAddress >= 1 and usAddress + usNRegs - 1 <= 2 + CONF_REGS - 1) {
+  if (usAddress >= 1 and usAddress + usNRegs <= 1 + ConfData::mbLength) {
     for (USHORT i = 0; i < usNRegs; i++) {
       if (eMode == MB_REG_WRITE) {
         switch (usAddress + i) {
@@ -194,7 +108,7 @@ eMBErrorCode eMBRegHoldingCB2(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usN
               relay1.set(false);
             }
             break;
-          case 2 ... 2 + CONF_REGS - 1:
+          case 2 ... 2 + ConfData::mbLength - 1:
             conf.data[usAddress + i - 2] = (pucRegBuffer[i * 2 + 0] << 8) + pucRegBuffer[i * 2 + 1];
             update_conf = true;
             break;
