@@ -6,7 +6,7 @@
 #include <EEPROM.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "2"
+#define VERSION_MINOR "3"
 
 #define TEST
 
@@ -25,7 +25,7 @@ GPIORelay relay1(5, Duration(250));
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
-BL0942 bl0942(Serial1);
+BL0942 bl0942(Serial1, 256);
 TempSensor tempSensor;
 
 struct ConfData_ {
@@ -94,22 +94,32 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
   return eMBCopyToRegBuffer(input_register, pucRegBuffer, usAddress, usNRegs);
 }
 
-eMBErrorCode eMBRegHoldingCB2(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode) {
+eMBErrorCode eMBRegHoldingCB(USHORT * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode) {
   bool update_conf = false;
-  if (usAddress >= 1 and usAddress + usNRegs <= 1 + ConfData::mbLength) {
+  bool update_energy = false;
+  uint32_t energy_mW = 0;
+  if (usAddress >= 1 and usAddress + usNRegs <= 4 + ConfData::mbLength) {
     for (USHORT i = 0; i < usNRegs; i++) {
       if (eMode == MB_REG_WRITE) {
         switch (usAddress + i) {
           case 1:
-            if (pucRegBuffer[i * 2 + 1] and not digitalRead(CF_PIN)) {
+            if (__builtin_bswap16(pucRegBuffer[i]) and not digitalRead(CF_PIN)) {
               relay1.set(true);
             }
             else {
               relay1.set(false);
             }
             break;
-          case 2 ... 2 + ConfData::mbLength - 1:
-            conf.data[usAddress + i - 2] = (pucRegBuffer[i * 2 + 0] << 8) + pucRegBuffer[i * 2 + 1];
+          case 2:
+            energy_mW |= __builtin_bswap16(pucRegBuffer[i]);
+            update_energy = true;
+            break;
+          case 3:
+            energy_mW |= uint32_t(__builtin_bswap16(pucRegBuffer[i])) << 16;
+            update_energy = true;
+            break;
+          case 4 ... 4 + ConfData::mbLength:
+            conf.data[usAddress + i - 4] = __builtin_bswap16(pucRegBuffer[i]);
             update_conf = true;
             break;
           default:
@@ -121,6 +131,9 @@ eMBErrorCode eMBRegHoldingCB2(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usN
       EEPROM.put(2, conf);
       bl0942.calibrate(conf.s.i_gain, conf.s.v_gain);
       tempSensor.calibrate(conf.s.temp_offset, conf.s.temp_gain);
+    }
+    if (update_energy) {
+      bl0942.set_energy(energy_mW);
     }
     return MB_ENOERR;
   }
