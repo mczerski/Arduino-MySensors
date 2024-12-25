@@ -6,7 +6,7 @@
 #include <EEPROM.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "3"
+#define VERSION_MINOR "4"
 
 #define TEST
 
@@ -75,7 +75,7 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
     int32_t i_rms_mA;
     int32_t v_rms_mV;
     int32_t p_rms_mW;
-    int32_t e_mWh;
+    uint32_t e_mWh;
     int32_t fast_i_rms_mA;
     int16_t temperature;
     ConfData_ conf_data;
