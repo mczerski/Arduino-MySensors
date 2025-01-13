@@ -3,7 +3,7 @@
 #include <ArtronShop_BH1750.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "0"
+#define VERSION_MINOR "1"
 
 #define TEST
 
@@ -12,23 +12,31 @@
 #define SLAVE_NAME "Test"
 #define FLASH_ID 0x1F65
 #define LED_PIN A1
-#define MOTION
-#define MOTION_PIN 3
-
+#define MOTION_SENSOR
+#define MOTION_PIN 2
+#define BH1750_SENSOR
+#define BME280_SENSOR
 #endif
 
 #ifdef KITCHEN_MOTION
 #define SLAVE_ID 4
 #define SLAVE_NAME "Kitchen Motion"
-#define MOTION
-#define MOTION_PIN 2
 #define FLASH_ID 0x1F65
 #define LED_PIN A1
+#define MOTION_SENSOR
+#define MOTION_PIN 2
+#define BH1750_SENSOR
+#define BME280_SENSOR
 #endif
 
 const char additional_info[] = SLAVE_NAME " v" VERSION_MAJOR "." VERSION_MINOR;
 SPIFlash flash(8, FLASH_ID);
+
+#ifdef BH1750_SENSOR
 ArtronShop_BH1750 bh1750(0x23, &Wire);
+#endif
+
+#ifdef BME280_SENSOR
 BME280I2C bmeSensor(
   BME280I2C::Settings(
     BME280::OSR_X1,
@@ -41,13 +49,14 @@ BME280I2C bmeSensor(
     0x77
   )
 );
+#endif
 
 struct InputRegisters_ {
+  uint16_t status;
   uint16_t motion_state;
   uint16_t luminance;
   uint16_t humidity;
   uint16_t temperature;
-  uint16_t status;
 };
 typedef ModbusDataBlock<InputRegisters_> InputRegisters;
 InputRegisters input_register;
@@ -55,24 +64,31 @@ InputRegisters input_register;
 
 void setup() {
   eMBInitWithWDT(MB_RTU, 0, WDTO_8S, SLAVE_ID, additional_info, sizeof(additional_info) - 1, &flash, LED_PIN);
-  #ifdef MOTION
+#ifdef MOTION_SENSOR
   pinMode(MOTION_PIN, INPUT_PULLUP);
-  #endif
+#endif
   Wire.begin();
   input_register.s.status = 0;
-  input_register.s.status |= int(bmeSensor.begin());
+#ifdef BH1750_SENSOR
   input_register.s.status |= (int(bh1750.begin()) << 1);
+#endif
+#ifdef BME280_SENSOR
+  input_register.s.status |= int(bmeSensor.begin());
+#endif
 }
 
 void loop() {
   eMBPollWithWDT();
-  input_register = {
-    digitalRead(MOTION_PIN),
-    round(bh1750.light()),
-    round(bmeSensor.hum()),
-    round(bmeSensor.temp() * 10),
-    input_register.s.status
-  };
+#ifdef MOTION_SENSOR
+  input_register.s.motion_state = digitalRead(MOTION_PIN);
+#endif
+#ifdef BH1750_SENSOR
+  input_register.s.luminance = round(bh1750.light());
+#endif
+#ifdef BME280_SENSOR
+  input_register.s.humidity = round(bmeSensor.hum());
+  input_register.s.temperature = round(bmeSensor.temp() * 10);
+#endif
 }
 
 eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs) {
