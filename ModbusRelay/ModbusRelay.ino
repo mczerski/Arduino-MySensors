@@ -6,7 +6,7 @@
 #include <EEPROM.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "4"
+#define VERSION_MINOR "5"
 
 #define TEST
 
