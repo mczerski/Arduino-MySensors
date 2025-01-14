@@ -6,15 +6,26 @@
 #include <EEPROM.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "5"
+#define VERSION_MINOR "6"
 
-#define TEST
+#define CORIDOR_SOCKET
 
 using namespace mys_toolkit;
 
 #ifdef TEST
 #define SLAVE_ID 0
 #define SLAVE_NAME "Test"
+#define FLASH_ID 0x1F65
+#define LED_PIN A1
+#define STATUS_LED_PIN 6
+#define CF_PIN 2
+BounceSwitch sw1(3, Duration(50), false);
+GPIORelay relay1(5, Duration(250));
+#endif
+
+#ifdef CORIDOR_SOCKET
+#define SLAVE_ID 6
+#define SLAVE_NAME "Corridor Socket"
 #define FLASH_ID 0x1F65
 #define LED_PIN A1
 #define STATUS_LED_PIN 6
