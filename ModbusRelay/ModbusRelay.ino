@@ -6,7 +6,7 @@
 #include <EEPROM.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "6"
+#define VERSION_MINOR "7"
 
 #define CORIDOR_SOCKET
 
@@ -54,6 +54,8 @@ void cf_interrupt() {
 
 void setup() {
   eMBInitWithWDT(MB_RTU, 0, WDTO_8S, SLAVE_ID, additional_info, sizeof(additional_info) - 1, &flash, LED_PIN);
+  // disable SPI before enabling Serial1 as they share the same pins and bootloader uses SPI to communicate with FLASH
+  SPI.end();
   Serial1.begin(4800);
   bl0942.begin();
   pinMode(STATUS_LED_PIN, OUTPUT);
