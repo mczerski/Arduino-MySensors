@@ -6,7 +6,7 @@
 #include <EEPROM.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "7"
+#define VERSION_MINOR "8"
 
 #define TEST
 
@@ -50,6 +50,15 @@ ConfData conf;
 
 void cf_interrupt() {
   relay1.set(false);
+}
+
+// BL0942 UART shares pins with SPI flash, keep it quiet during flash access
+void eMBBeforeFlashAccess() {
+  bl0942.suspend();
+}
+
+void eMBAfterFlashAccess() {
+  bl0942.resume();
 }
 
 void setup() {
