@@ -8,14 +8,14 @@
 #define VERSION_MAJOR "1"
 #define VERSION_MINOR "7"
 
-#define CORIDOR_SOCKET
+#define TEST
 
 using namespace mys_toolkit;
 
 #ifdef TEST
 #define SLAVE_ID 0
 #define SLAVE_NAME "Test"
-#define FLASH_ID 0x1F65
+#define FLASH_ID 0xC840
 #define LED_PIN A1
 #define STATUS_LED_PIN 6
 #define CF_PIN 2
