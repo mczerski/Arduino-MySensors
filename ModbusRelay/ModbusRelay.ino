@@ -3,12 +3,13 @@
 #include <Relay.h>
 #include <BL0942.h>
 #include <TempSensor.h>
+#include <led.h>
 #include <EEPROM.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "8"
+#define VERSION_MINOR "9"
 
-#define TEST
+#define CORIDOR_SOCKET
 
 using namespace mys_toolkit;
 
@@ -26,7 +27,7 @@ GPIORelay relay1(5, Duration(250));
 #ifdef CORIDOR_SOCKET
 #define SLAVE_ID 6
 #define SLAVE_NAME "Corridor Socket"
-#define FLASH_ID 0x1F65
+#define FLASH_ID 0xC840
 #define LED_PIN A1
 #define STATUS_LED_PIN 6
 #define CF_PIN 2
@@ -87,7 +88,9 @@ void loop() {
   tempSensor.update();
   relay1.update(sw1.update());
   analogWrite(STATUS_LED_PIN, relay1.getState() ? 10 : 0);
-  bl0942.update();
+  if (bl0942.update()) {
+    trigger_led();
+  }
   eMBPollWithWDT();
 }
 
@@ -119,10 +122,29 @@ eMBErrorCode eMBRegInputCB(UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNReg
 eMBErrorCode eMBRegHoldingCB(USHORT * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode) {
   bool update_conf = false;
   bool update_energy = false;
-  uint32_t energy_mW = 0;
+  uint32_t energy_mWh = bl0942.getE_mWh();
   if (usAddress >= 1 and usAddress + usNRegs <= 4 + ConfData::mbLength) {
     for (USHORT i = 0; i < usNRegs; i++) {
-      if (eMode == MB_REG_WRITE) {
+      if (eMode == MB_REG_READ) {
+        uint16_t value;
+        switch (usAddress + i) {
+          case 1:
+            value = relay1.getState();
+            break;
+          case 2:
+            value = uint16_t(energy_mWh);
+            break;
+          case 3:
+            value = uint16_t(energy_mWh >> 16);
+            break;
+          default:
+            // 4 ... 3 + ConfData::mbLength, guaranteed by the range check above
+            value = conf.data[usAddress + i - 4];
+            break;
+        }
+        pucRegBuffer[i] = __builtin_bswap16(value);
+      }
+      else if (eMode == MB_REG_WRITE) {
         switch (usAddress + i) {
           case 1:
             if (__builtin_bswap16(pucRegBuffer[i]) and not digitalRead(CF_PIN)) {
@@ -133,14 +155,14 @@ eMBErrorCode eMBRegHoldingCB(USHORT * pucRegBuffer, USHORT usAddress, USHORT usN
             }
             break;
           case 2:
-            energy_mW |= __builtin_bswap16(pucRegBuffer[i]);
+            energy_mWh = (energy_mWh & 0xFFFF0000ul) | __builtin_bswap16(pucRegBuffer[i]);
             update_energy = true;
             break;
           case 3:
-            energy_mW |= uint32_t(__builtin_bswap16(pucRegBuffer[i])) << 16;
+            energy_mWh = (energy_mWh & 0x0000FFFFul) | uint32_t(__builtin_bswap16(pucRegBuffer[i])) << 16;
             update_energy = true;
             break;
-          case 4 ... 4 + ConfData::mbLength:
+          case 4 ... 3 + ConfData::mbLength:
             conf.data[usAddress + i - 4] = __builtin_bswap16(pucRegBuffer[i]);
             update_conf = true;
             break;
@@ -155,7 +177,7 @@ eMBErrorCode eMBRegHoldingCB(USHORT * pucRegBuffer, USHORT usAddress, USHORT usN
       tempSensor.calibrate(conf.s.temp_offset, conf.s.temp_gain);
     }
     if (update_energy) {
-      bl0942.set_energy(energy_mW);
+      bl0942.set_energy(energy_mWh);
     }
     return MB_ENOERR;
   }
