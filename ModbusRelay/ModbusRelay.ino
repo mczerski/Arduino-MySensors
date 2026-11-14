@@ -7,7 +7,7 @@
 #include <EEPROM.h>
 
 #define VERSION_MAJOR "1"
-#define VERSION_MINOR "9"
+#define VERSION_MINOR "10"
 
 #define CORIDOR_SOCKET
 
@@ -21,7 +21,7 @@ using namespace mys_toolkit;
 #define STATUS_LED_PIN 6
 #define CF_PIN 2
 BounceSwitch sw1(3, Duration(50), false);
-GPIORelay relay1(5, Duration(250));
+GPIORelay relay1(5, Duration(500));
 #endif
 
 #ifdef CORIDOR_SOCKET
